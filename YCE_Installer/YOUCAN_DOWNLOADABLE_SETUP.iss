@@ -4,7 +4,7 @@
 ; Defines for the application
 #define MyAppName "OSET Installer"
 #define MyAppShortCut "OSET Launcher"
-#define MyAppVersion "1.0.0.2"
+#define MyAppVersion "1.1.0.0"
 #define MyAppPublisher "Youcanevent"
 #define MyAppURL "https://www.youcanevent.com/"
 #define MyAppExeName "YCE.exe"
@@ -21,7 +21,7 @@
 #define VCLStyle "Windows10Dark.vsf"
 
 ; Fill this out with the path to your built launchpad binaries.
-#define LaunchpadReleaseDir ".\Win64\OSET"
+#define YCEDependencies ".\dependencies"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application.
@@ -72,6 +72,20 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 ; This is for the reskinner
 Source: VclStylesinno.dll; DestDir: {app}; Flags: dontcopy
 Source: .\Styles\{#VCLStyle}; DestDir: {app}; Flags: dontcopy
+; This is for extra dependencies
+
+[CustomMessages]
+authentication_form_Caption=SQL Server Database Setup
+authentication_form_Description=Choose SQL Server database you will be using (ask your administrator about its parameters)
+authentication_form_Label1_Caption0=Server Name:
+authentication_form_Label2_Caption0=Enter Path to SQL Server (e.g. .\SQLEXPRESS; DEVSERVER)
+authentication_form_Label3_Caption0=User name:
+authentication_form_Label4_Caption0=Password:
+authentication_form_ServerNameEdit_Text0=
+authentication_form_WindowsRadioButton_Caption0=Use Windows Authentication
+authentication_form_SqlRadioButton_Caption0=Use SQL Authentication
+authentication_form_UserEdit_Text0=
+authentication_form_PasswordEdit_Text0=
 
 [Icons]
 Name: "{group}\{#MyAppShortCut}"; Filename: "{app}\{#MyAppExeName}"
@@ -107,11 +121,324 @@ procedure LoadVCLStyle(VClStyleFile: String); external 'LoadVCLStyleW@files:VclS
 // Import the UnLoadVCLStyles function from VclStylesInno.DLL
 procedure UnLoadVCLStyles; external 'UnLoadVCLStyles@files:VclStylesInno.dll stdcall';
 
+
+// Queueries through the WMIC database
+function WbemQuery(WbemServices: Variant; Query: string): Variant;
+var
+  WbemObjectSet: Variant;
+begin
+  Result := Null;
+  WbemObjectSet := WbemServices.ExecQuery(Query);
+  if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
+  begin
+    Result := WbemObjectSet.ItemIndex(0);
+  end;
+end;
+
+// This is to check min specs in the computer to see if it is worth to install
+// The app on the computer in PC
+function CollectInformation : Boolean;
+var
+  Query: string;
+  WbemLocator, WbemServices: Variant;
+  ComputerSystem, OperatingSystem, Processor, NetworkAdapters, NetworkAdapter: Variant;
+  IPAddresses: array of string;
+  I, I2 : Integer;
+  RAM, Disk, ClockSpeed : Extended;
+  // TempValue : string;
+  MinRAM, MinDisk, MinClockSpeed : Extended;
+begin
+
+  MinRAM := 8000000000.00;
+  MinDisk := 800000000.00;
+  MinClockSpeed := 1200.00;
+
+  Result:=True;
+  WbemLocator := CreateOleObject('WbemScripting.SWbemLocator');
+  WbemServices := WbemLocator.ConnectServer('.', 'root\CIMV2');
+
+  Query := 'SELECT TotalPhysicalMemory FROM Win32_ComputerSystem';
+  ComputerSystem := WbemQuery(WbemServices, Query);
+  if not VarIsNull(ComputerSystem) then
+  begin
+    Log(Format('TotalPhysicalMemory=%s', [ComputerSystem.TotalPhysicalMemory]));
+
+    // TempValue := Format('%s', [ComputerSystem.TotalPhysicalMemory]);
+    RAM := StrToFloat(Format('%s', [ComputerSystem.TotalPhysicalMemory]));
+    // Log(Format('TempValue is %f', [RAM]));
+  
+    if RAM < MinRAM then
+    begin
+      if SuppressibleMsgBox('Your Machine has less than the minimum RAM '     + 
+                            'required for the application to run properly. '  + 
+                            '(You have ' + 
+                            Format('%.0f GB', [RAM / (1000*1000*1000)]) + 
+                            ' and min required is ' + 
+                            Format('%.0f GB', [MinRAM / (1000*1000*1000)])      + 
+                            ')Are you sure you want to continue?', mbError, MB_YESNO, IDYES) = IDNO then
+      begin
+        Result := False;
+      end;
+    end;
+  end;
+
+  Query := 'SELECT FreeSpace FROM Win32_LogicalDisk';
+  OperatingSystem := WbemQuery(WbemServices, Query);
+  if not VarIsNull(OperatingSystem) then
+  begin
+    Log(Format('FreeSpace=%s', [OperatingSystem.FreeSpace]));
+    
+    Disk := StrToFloat(Format('%s', [OperatingSystem.FreeSpace]));
+
+    if Disk < MinDisk then
+    begin
+      if SuppressibleMsgBox('Your Machine has less than the required Disk Space ' + 
+                            'to install the application '  + 
+                            '(You have ' + 
+                            Format('%.0f MB', [Disk / (1000*1000)]) + 
+                            ' and min required is ' + 
+                            Format('%.0f MB', [MinDisk / (1000*1000)])      + 
+                            ') Please free up some space', mbCriticalError, MB_OK, MB_OK) = IDOK then
+      begin
+        Result := False;
+      end;
+    end;
+  end;
+
+  Query := 'SELECT Caption FROM Win32_OperatingSystem';
+  OperatingSystem := WbemQuery(WbemServices, Query);
+  if not VarIsNull(OperatingSystem) then
+  begin
+    Log(Format('OperatingSystem=%s', [OperatingSystem.Caption]));
+  end;
+
+  Query := 'SELECT Name, MaxClockSpeed FROM Win32_Processor';
+  Processor := WbemQuery(WbemServices, Query);
+  if not VarIsNull(Processor) then
+  begin
+    Log(Format('Processor=%s', [Processor.Name]));
+    Log(Format('MaxClockSpeed=%s', [Processor.MaxClockSpeed]));
+
+    ClockSpeed := StrToFloat(Format('%s', [Processor.MaxClockSpeed]));
+
+    if ClockSpeed < MinClockSpeed then
+    begin
+      if SuppressibleMsgBox('Your Machines Processor is less than the ' + 
+                            'required Processor '  + 
+                            '(You have an ' + 
+                            Format('%s', [Processor.Name]) + 
+                            ' with Clock Speed of ' + 
+                            Format('%.0f GH', [ClockSpeed / 100])      + 
+                            ') Please get in contact with your event' + 
+                            ' provider', mbCriticalError, MB_OK, MB_OK) = IDOK then
+      begin
+        Result := False;
+      end;
+    end;
+  end;
+  (*
+  Query :=
+    'SELECT IPEnabled, IPAddress, MACAddress FROM Win32_NetworkAdapterConfiguration';
+  NetworkAdapters := WbemServices.ExecQuery(Query);
+  if not VarIsNull(NetworkAdapters) then
+  begin
+    for I := 0 to NetworkAdapters.Count - 1 do
+    begin
+      NetworkAdapter := NetworkAdapters.ItemIndex(I);
+      if (not VarIsNull(NetworkAdapter.MACAddress)) and NetworkAdapter.IPEnabled then
+      begin
+        Log(Format('Adapter %d MAC=%s', [I, NetworkAdapter.MACAddress]));
+        if not VarIsNull(NetworkAdapter.IPAddress) then
+        begin
+          IPAddresses := NetworkAdapter.IPAddress;
+          for I2 := 0 to GetArrayLength(IPAddresses) - 1 do
+          begin
+            Log(Format('Adapter %d IP %d=%s', [I, I2, IPAddresses[I2]]));
+          end;
+        end;
+      end;
+    end;
+  end;
+    *)
+end;
+
+var
+  Label1: TLabel;
+  Label2: TLabel;
+  Label3: TLabel;
+  Label4: TLabel;
+  ServerNameEdit: TEdit;
+  WindowsRadioButton: TRadioButton;
+  SqlRadioButton: TRadioButton;
+  UserEdit: TEdit;
+  PasswordEdit: TEdit;
+  CustomButtom: TButton;
+  SimpleButton: TButton;
+
+function authentication_form_NextButtonClick(Page: TWizardPage): Boolean;
+begin
+  Result := True;
+  if ServerNameEdit.Text <> ''   then
+    begin
+       if SqlRadioButton.Checked then
+       begin
+          if UserEdit.Text = ''  then
+          begin
+             MsgBox('You should enter user name', mbError, MB_OK);
+             Result := False;
+          end
+          else
+          begin
+            if PasswordEdit.Text = '' then
+            begin
+               MsgBox('You should enter password', mbError, MB_OK);
+               Result := False;
+            end
+          end
+       end
+    end
+    else
+    begin
+    MsgBox('You should enter path to SQL Server Database', mbError, MB_OK);
+    Result := False;
+    end;
+end;
+
+function authentication_form_CreatePage(PreviousPageId: Integer): Integer;
+var
+  Page: TWizardPage;
+begin
+  Page := CreateCustomPage(
+    PreviousPageId,
+    ExpandConstant('{cm:authentication_form_Caption}'),
+    ExpandConstant('{cm:authentication_form_Description}')
+  );
+
+  Label1 := TLabel.Create(Page);
+  with Label1 do
+  begin
+    Parent := Page.Surface;
+    Caption := ExpandConstant('{cm:authentication_form_Label1_Caption0}');
+    Left := ScaleX(16);
+    Top := ScaleY(0);
+    Width := ScaleX(84);
+    Height := ScaleY(17);
+  end;
+ 
+  Label2 := TLabel.Create(Page);
+  with Label2 do
+  begin
+    Parent := Page.Surface;
+    Caption := ExpandConstant('{cm:authentication_form_Label2_Caption0}');
+    Left := ScaleX(16);
+    Top := ScaleY(56);
+    Width := ScaleX(300);
+    Height := ScaleY(17);
+  end;
+ 
+  Label3 := TLabel.Create(Page);
+  with Label3 do
+  begin
+    Parent := Page.Surface;
+    Caption := ExpandConstant('{cm:authentication_form_Label3_Caption0}');
+    Left := ScaleX(56);
+    Top := ScaleY(136);
+    Width := ScaleX(70);
+    Height := ScaleY(17);
+  end;
+ 
+  Label4 := TLabel.Create(Page);
+  with Label4 do
+  begin
+    Parent := Page.Surface;
+    Caption := ExpandConstant('{cm:authentication_form_Label4_Caption0}');
+    Left := ScaleX(56);
+    Top := ScaleY(168);
+    Width := ScaleX(63);
+    Height := ScaleY(17);
+  end;
+ 
+  ServerNameEdit := TEdit.Create(Page);
+  with ServerNameEdit do
+  begin
+    Parent := Page.Surface;
+    Left := ScaleX(16);
+    Top := ScaleY(24);
+    Width := ScaleX(257);
+    Height := ScaleY(25);
+    TabOrder := 0;
+    Text := ExpandConstant('{cm:authentication_form_ServerNameEdit_Text0}');
+  end;
+ 
+  WindowsRadioButton := TRadioButton.Create(Page);
+  with WindowsRadioButton do
+  begin
+    Parent := Page.Surface;
+    Caption := ExpandConstant('{cm:authentication_form_WindowsRadioButton_Caption0}');
+    Left := ScaleX(16);
+    Top := ScaleY(88);
+    Width := ScaleX(225);
+    Height := ScaleY(17);
+    Checked := True;
+    TabOrder := 1;
+    TabStop := True;
+  end;
+ 
+  SqlRadioButton := TRadioButton.Create(Page);
+  with SqlRadioButton do
+  begin
+    Parent := Page.Surface;
+    Caption := ExpandConstant('{cm:authentication_form_SqlRadioButton_Caption0}');
+    Left := ScaleX(16);
+    Top := ScaleY(112);
+    Width := ScaleX(193);
+    Height := ScaleY(17);
+    TabOrder := 2;
+  end;
+ 
+  UserEdit := TEdit.Create(Page);
+  with UserEdit do
+  begin
+    Parent := Page.Surface;
+    Left := ScaleX(136);
+    Top := ScaleY(136);
+    Width := ScaleX(121);
+    Height := ScaleY(25);
+    TabOrder := 3;
+    Text := ExpandConstant('{cm:authentication_form_UserEdit_Text0}');
+  end;
+ 
+  PasswordEdit := TEdit.Create(Page);
+  with PasswordEdit do
+  begin
+    Parent := Page.Surface;
+    Left := ScaleX(136);
+    Top := ScaleY(168);
+    Width := ScaleX(121);
+    Height := ScaleY(25);
+    TabOrder := 4;
+    PasswordChar := '*';
+    Text := ExpandConstant('{cm:authentication_form_PasswordEdit_Text0}');
+  end;
+
+  with Page do
+  begin
+    OnNextButtonClick := @authentication_form_NextButtonClick;
+  end;
+
+  Result := Page.ID;
+end;
+
 function InitializeSetup(): Boolean;
 begin
 	ExtractTemporaryFile('{#VCLStyle}');
 	LoadVCLStyle(ExpandConstant('{tmp}\{#VCLStyle}'));
-	Result := True;
+  Result := True;
+  if not CollectInformation then
+  begin
+    SuppressibleMsgBox('OSET was not able to install on your PC', mbError, MB_OK, MB_OK);
+    Result := False;
+  end;
 end;
 
 procedure DeinitializeSetup();
@@ -125,9 +452,10 @@ procedure InitializeWizard();
 var i: Integer;
 
 begin
+  authentication_form_CreatePage(wpLicense);
   idpSetOption('InvalidCert', 'ShowDlg');
-
-  idpAddFile('https://d1hvcan3unaihg.cloudfront.net/game/Win64/{#MyAppZip}', ExpandConstant('{tmp}\{#MyAppZip}'));
+  // idpDownloadFile('{#MyAppURL}/{#MyAppOS}/GameVersion.txt', ExpandConstant('{app}\GameVersion.txt'));
+  idpAddFile('{#MyAppURL}/{#MyAppOS}/{#MyAppZip}', ExpandConstant('{tmp}\{#MyAppZip}'));
   idpDownloadAfter(wpReady);
 end;
 
@@ -196,3 +524,5 @@ begin
   if CurPageID = wpFinished then
     WizardForm.RunList.Visible := False;
 end;
+
+
