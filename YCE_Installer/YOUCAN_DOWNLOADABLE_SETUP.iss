@@ -2,12 +2,12 @@
 #pragma include __INCLUDE__ + ";" + ReadReg(HKLM, "Software\Mitrich Software\Inno Download Plugin", "InstallDir")
 
 ; Defines for the application
-#define MyAppName "OSET Installer"
-#define MyAppShortCut "OSET Launcher"
+#define MyAppName "OSET 2020 Installer"
+#define MyAppShortCut "OSET2020"
 #define MyAppVersion "1.1.0.0"
 #define MyAppPublisher "Youcanevent"
 #define MyAppURL "https://www.youcanevent.com/"
-#define MyAppExeName "YCE.exe"
+#define MyAppExeName "OSET2020.exe"
 #define MYAppSubFolder "OSET"
 #define MyAppOS "Win64"
 #define MyAppURL "https://d1hvcan3unaihg.cloudfront.net/game"
@@ -18,7 +18,7 @@
 #include <idp.iss>
 
 ; This is for skins
-#define VCLStyle "Windows10Dark.vsf"
+#define VCLStyle "MetroBlue.vsf"
 
 ; Fill this out with the path to your built launchpad binaries.
 #define YCEDependencies ".\dependencies"
@@ -27,12 +27,12 @@
 ; NOTE: The value of AppId uniquely identifies this application.
 ; Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-; SignTool=MSign $f
 ; App ID for Latino Leaders
 ; AppId={{6FDB17A1-9AE3-4460-94E3-1801594998F4}
 ; App ID for OSET
+//SignTool=MsSign
 AppId={{5ACBA2B4-A874-461C-A898-863DCC1EDC21}}
-AppName={#MyAppName}
+AppName={#MyAppShortcut}
 AppVersion={#MyAppVersion}
 AppVerName={#MyAppName}                
 AppPublisher={#MyAppPublisher}
@@ -43,15 +43,18 @@ DefaultDirName={commonpf}\{#MyAppPublisher}\{#MyAppSubFolder}
 DefaultGroupName={#MyAppPublisher}
 OutputDir=.\installer\{#MyAppSubFolder}
 OutputBaseFilename={#MyAppName}
-SetupIconFile=.\YCEBanner.ico
+SetupIconFile={#YCEDependencies}\oset.ico
 Compression=lzma
 SolidCompression=yes
 UninstallDisplayIcon={app}\{#MyAppExeName}
 PrivilegesRequired=none
 ExtraDiskSpaceRequired=500048576
-DisableDirPage=yes
-DisableProgramGroupPage=yes
-DisableReadyPage=yes
+DisableWelcomePage=no
+DisableDirPage=no
+DisableProgramGroupPage=no
+DisableReadyPage=no
+WizardSmallImageFile={#YCEDependencies}\osetsmall.bmp
+WizardImageFile={#YCEDependencies}\osetBanner.bmp
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}"
@@ -72,20 +75,23 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 ; This is for the reskinner
 Source: VclStylesinno.dll; DestDir: {app}; Flags: dontcopy
 Source: .\Styles\{#VCLStyle}; DestDir: {app}; Flags: dontcopy
+Source: .\{#YCEDependencies}\pikachu.bmp; Flags: dontcopy
+Source: .\{#YCEDependencies}\batman.bmp; Flags: dontcopy
+Source: .\{#YCEDependencies}\osetlarge.bmp; Flags: dontcopy
 ; This is for extra dependencies
 
+[Messages]
+WelcomeLabel1=Welcome to the OSET2020 Setup Wizard!
+WelcomeLabel2=We can't wait to see you! %n%n This wizard installs OSET 2020 Digital on your computer. %n%n Please close all other applications before continuing the install.
+
 [CustomMessages]
-authentication_form_Caption=SQL Server Database Setup
-authentication_form_Description=Choose SQL Server database you will be using (ask your administrator about its parameters)
-authentication_form_Label1_Caption0=Server Name:
-authentication_form_Label2_Caption0=Enter Path to SQL Server (e.g. .\SQLEXPRESS; DEVSERVER)
-authentication_form_Label3_Caption0=User name:
-authentication_form_Label4_Caption0=Password:
-authentication_form_ServerNameEdit_Text0=
-authentication_form_WindowsRadioButton_Caption0=Use Windows Authentication
-authentication_form_SqlRadioButton_Caption0=Use SQL Authentication
-authentication_form_UserEdit_Text0=
-authentication_form_PasswordEdit_Text0=
+installation_form_Caption=OSET 2020 Installation setup
+installation_form_Description=Choose which type of installation you want to have
+installation_form_WindowsRadioButton_Caption0=Express Install
+installation_form_SqlRadioButton_Caption0=Custom Install Location
+installation_form_Label1=Type the new Path to install the application
+installation_form_Edit1=DefaultDirName
+custom_install_form_Description=Choose which path where the app will install
 
 [Icons]
 Name: "{group}\{#MyAppShortCut}"; Filename: "{app}\{#MyAppExeName}"
@@ -263,170 +269,21 @@ begin
 end;
 
 var
-  Label1: TLabel;
-  Label2: TLabel;
-  Label3: TLabel;
-  Label4: TLabel;
-  ServerNameEdit: TEdit;
-  WindowsRadioButton: TRadioButton;
-  SqlRadioButton: TRadioButton;
-  UserEdit: TEdit;
-  PasswordEdit: TEdit;
-  CustomButtom: TButton;
-  SimpleButton: TButton;
+  AdvanceInstall: TRadioButton;
+  ExpressInstall: TRadioButton;
+  useCustomInstall: Boolean;
+  ExpressImage: TBitmapImage;
+  CustomImage: TBitmapImage;
+  Page: TInputFileWizardPage;
 
-function authentication_form_NextButtonClick(Page: TWizardPage): Boolean;
+function check_install_click(Page: TWizardPage) : Boolean;
 begin
+  useCustomInstall := False;
+  if AdvanceInstall.Checked then
+  begin
+    useCustomInstall := True;
+  end;
   Result := True;
-  if ServerNameEdit.Text <> ''   then
-    begin
-       if SqlRadioButton.Checked then
-       begin
-          if UserEdit.Text = ''  then
-          begin
-             MsgBox('You should enter user name', mbError, MB_OK);
-             Result := False;
-          end
-          else
-          begin
-            if PasswordEdit.Text = '' then
-            begin
-               MsgBox('You should enter password', mbError, MB_OK);
-               Result := False;
-            end
-          end
-       end
-    end
-    else
-    begin
-    MsgBox('You should enter path to SQL Server Database', mbError, MB_OK);
-    Result := False;
-    end;
-end;
-
-function authentication_form_CreatePage(PreviousPageId: Integer): Integer;
-var
-  Page: TWizardPage;
-begin
-  Page := CreateCustomPage(
-    PreviousPageId,
-    ExpandConstant('{cm:authentication_form_Caption}'),
-    ExpandConstant('{cm:authentication_form_Description}')
-  );
-
-  Label1 := TLabel.Create(Page);
-  with Label1 do
-  begin
-    Parent := Page.Surface;
-    Caption := ExpandConstant('{cm:authentication_form_Label1_Caption0}');
-    Left := ScaleX(16);
-    Top := ScaleY(0);
-    Width := ScaleX(84);
-    Height := ScaleY(17);
-  end;
- 
-  Label2 := TLabel.Create(Page);
-  with Label2 do
-  begin
-    Parent := Page.Surface;
-    Caption := ExpandConstant('{cm:authentication_form_Label2_Caption0}');
-    Left := ScaleX(16);
-    Top := ScaleY(56);
-    Width := ScaleX(300);
-    Height := ScaleY(17);
-  end;
- 
-  Label3 := TLabel.Create(Page);
-  with Label3 do
-  begin
-    Parent := Page.Surface;
-    Caption := ExpandConstant('{cm:authentication_form_Label3_Caption0}');
-    Left := ScaleX(56);
-    Top := ScaleY(136);
-    Width := ScaleX(70);
-    Height := ScaleY(17);
-  end;
- 
-  Label4 := TLabel.Create(Page);
-  with Label4 do
-  begin
-    Parent := Page.Surface;
-    Caption := ExpandConstant('{cm:authentication_form_Label4_Caption0}');
-    Left := ScaleX(56);
-    Top := ScaleY(168);
-    Width := ScaleX(63);
-    Height := ScaleY(17);
-  end;
- 
-  ServerNameEdit := TEdit.Create(Page);
-  with ServerNameEdit do
-  begin
-    Parent := Page.Surface;
-    Left := ScaleX(16);
-    Top := ScaleY(24);
-    Width := ScaleX(257);
-    Height := ScaleY(25);
-    TabOrder := 0;
-    Text := ExpandConstant('{cm:authentication_form_ServerNameEdit_Text0}');
-  end;
- 
-  WindowsRadioButton := TRadioButton.Create(Page);
-  with WindowsRadioButton do
-  begin
-    Parent := Page.Surface;
-    Caption := ExpandConstant('{cm:authentication_form_WindowsRadioButton_Caption0}');
-    Left := ScaleX(16);
-    Top := ScaleY(88);
-    Width := ScaleX(225);
-    Height := ScaleY(17);
-    Checked := True;
-    TabOrder := 1;
-    TabStop := True;
-  end;
- 
-  SqlRadioButton := TRadioButton.Create(Page);
-  with SqlRadioButton do
-  begin
-    Parent := Page.Surface;
-    Caption := ExpandConstant('{cm:authentication_form_SqlRadioButton_Caption0}');
-    Left := ScaleX(16);
-    Top := ScaleY(112);
-    Width := ScaleX(193);
-    Height := ScaleY(17);
-    TabOrder := 2;
-  end;
- 
-  UserEdit := TEdit.Create(Page);
-  with UserEdit do
-  begin
-    Parent := Page.Surface;
-    Left := ScaleX(136);
-    Top := ScaleY(136);
-    Width := ScaleX(121);
-    Height := ScaleY(25);
-    TabOrder := 3;
-    Text := ExpandConstant('{cm:authentication_form_UserEdit_Text0}');
-  end;
- 
-  PasswordEdit := TEdit.Create(Page);
-  with PasswordEdit do
-  begin
-    Parent := Page.Surface;
-    Left := ScaleX(136);
-    Top := ScaleY(168);
-    Width := ScaleX(121);
-    Height := ScaleY(25);
-    TabOrder := 4;
-    PasswordChar := '*';
-    Text := ExpandConstant('{cm:authentication_form_PasswordEdit_Text0}');
-  end;
-
-  with Page do
-  begin
-    OnNextButtonClick := @authentication_form_NextButtonClick;
-  end;
-
-  Result := Page.ID;
 end;
 
 function InitializeSetup(): Boolean;
@@ -449,10 +306,73 @@ end;
 
 // This is to start downloading
 procedure InitializeWizard();
-var i: Integer;
-
+var 
+  i: Integer;
+  
 begin
-  authentication_form_CreatePage(wpLicense);
+  ExtractTemporaryFile('osetlarge.bmp');
+
+
+  Page := CreateInputFilePage(
+  wpWelcome, 'OSET 2020 Setup Wizard', 'Select Express Install or Custom Install location to choose where to install. Then click Next to continue',
+  '' );
+
+  Page.OnNextButtonClick := @check_install_click;
+
+  useCustomInstall := False;
+   
+  ExpressImage := TBitmapImage.Create(Page);
+  with ExpressImage do
+  begin
+    Parent := Page.Surface;
+    Bitmap.LoadFromFile(ExpandConstant('{tmp}')+'\osetlarge.bmp');
+    //AutoSize := True;
+    Stretch := True;
+    Left := 0;
+    Top := 50;
+    Width := Page.SurfaceWidth;
+    Height := 200;
+  end;
+ (*
+  CustomImage := TBitmapImage.Create(Page);
+  with CustomImage do
+  begin
+    Parent := Page.Surface;
+    Bitmap.LoadFromFile(ExpandConstant('{tmp}')+'\pikachu.bmp');
+    //AutoSize := True;
+    Stretch := True;
+    Left := ScaleX(225);
+    Top := ScaleY(50);
+    Width := ScaleX(200);
+    Height := ScaleY(200);
+  end;*)
+
+  ExpressInstall := TRadioButton.Create(Page);
+  with ExpressInstall do
+  begin
+    Parent := Page.Surface;
+    Caption := ExpandConstant('{cm:installation_form_WindowsRadioButton_Caption0}');
+    Left := ScaleX(0);
+    Top := ScaleY(20);
+    Width := ScaleX(225);
+    Height := ScaleY(17);
+    Checked := True;
+    TabOrder := 1;
+    TabStop := True;
+  end;
+ 
+  AdvanceInstall := TRadioButton.Create(Page);
+  with AdvanceInstall do
+  begin
+    Parent := Page.Surface;
+    Caption := ExpandConstant('{cm:installation_form_SqlRadioButton_Caption0}');
+    Left := ScaleX(225);
+    Top := ScaleY(20);
+    Width := ScaleX(193);
+    Height := ScaleY(17);
+    TabOrder := 2;
+  end;
+  
   idpSetOption('InvalidCert', 'ShowDlg');
   // idpDownloadFile('{#MyAppURL}/{#MyAppOS}/GameVersion.txt', ExpandConstant('{app}\GameVersion.txt'));
   idpAddFile('{#MyAppURL}/{#MyAppOS}/{#MyAppZip}', ExpandConstant('{tmp}\{#MyAppZip}'));
@@ -501,6 +421,27 @@ begin
   end;
 end;
 
+function ShouldSkipPage(PageID: Integer): Boolean;
+begin
+  { initialize result to not skip any page (not necessary, but safer) }
+  Result := False;
+  { if the page that is asked to be skipped is your custom page, then... }
+  if (PageID = wpSelectDir) and (not useCustomInstall) then
+  begin
+    { if the component is not selected, skip the page }
+    Result := True;
+  end;
+  if (PageID = wpReady) and (not useCustomInstall) then
+  begin
+    Result := True;
+  end;
+  if (PageID = wpSelectProgramGroup) and (not useCustomInstall) then
+  begin
+    { if the component is not selected, skip the page }
+    Result := True;
+  end;
+end;
+
 // This procedure is called per each file downloaded
 procedure CurStepChanged(CurStep: TSetupStep);
 // var i: Integer;
@@ -522,7 +463,9 @@ end;
 procedure CurPageChanged(CurPageID: Integer);
 begin
   if CurPageID = wpFinished then
+  begin
     WizardForm.RunList.Visible := False;
+  end;
 end;
 
 
