@@ -1,28 +1,37 @@
+; This is a downloader that was made to be as template-ish as possible for YCE
+; 
 ; This is for the downloader
 #pragma include __INCLUDE__ + ";" + ReadReg(HKLM, "Software\Mitrich Software\Inno Download Plugin", "InstallDir")
 
-; Defines for the application
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; DEFINES
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Common Defines for the application
 #define MyAppName "OSET 2020 Installer"
 #define MyAppShortCut "OSET2020"
 #define MyAppVersion "1.1.0.0"
 #define MyAppPublisher "Youcanevent"
 #define MyAppURL "https://www.youcanevent.com/"
 #define MyAppExeName "OSET2020.exe"
+; This ones to change things easier between projects
 #define MYAppSubFolder "OSET"
 #define MyAppOS "Win64"
 #define MyAppURL "https://d1hvcan3unaihg.cloudfront.net/game"
 #define FileList "FileList.txt"
 #define MyAppZip "YCE_OSET_Win64.zip"
 
-; This so we can download things
+; This dll is loaded so we can download things
 #include <idp.iss>
 
 ; This is for skins
 #define VCLStyle "MetroBlue.vsf"
 
-; Fill this out with the path to your built launchpad binaries.
-#define YCEDependencies ".\dependencies"
+; Fill this out with the path to your built resources
+#define YCEDependencies ".\dependencies\oset"
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Setup: Wizard variables
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application.
 ; Do not use the same AppId value in installers for other applications.
@@ -30,7 +39,6 @@
 ; App ID for Latino Leaders
 ; AppId={{6FDB17A1-9AE3-4460-94E3-1801594998F4}
 ; App ID for OSET
-//SignTool=MsSign
 AppId={{5ACBA2B4-A874-461C-A898-863DCC1EDC21}}
 AppName={#MyAppShortcut}
 AppVersion={#MyAppVersion}
@@ -43,7 +51,7 @@ DefaultDirName={commonpf}\{#MyAppPublisher}\{#MyAppSubFolder}
 DefaultGroupName={#MyAppPublisher}
 OutputDir=.\installer\{#MyAppSubFolder}
 OutputBaseFilename={#MyAppName}
-SetupIconFile={#YCEDependencies}\oset.ico
+SetupIconFile={#YCEDependencies}\icon.ico
 Compression=lzma
 SolidCompression=yes
 UninstallDisplayIcon={app}\{#MyAppExeName}
@@ -53,20 +61,25 @@ DisableWelcomePage=no
 DisableDirPage=no
 DisableProgramGroupPage=no
 DisableReadyPage=no
-WizardSmallImageFile={#YCEDependencies}\osetsmall.bmp
-WizardImageFile={#YCEDependencies}\osetBanner.bmp
+WizardSmallImageFile={#YCEDependencies}\small.bmp
+WizardImageFile={#YCEDependencies}\verticalbanner.bmp
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; UninstallDelete
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}"
+Type: files; Name: "{app}\{#MyAppZip}"
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Languages
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
-[LangOptions]
-
-[Tasks]
-; Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}";
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Files: Needed files for this to work
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 [Files]
 ; This is the executable to include
 ; Source: "{#LaunchpadReleaseDir}\{#MyAppExeName}"; DestDir: "{app}";
@@ -77,11 +90,13 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 ; This is for the reskinner
 Source: VclStylesinno.dll; DestDir: {app}; Flags: dontcopy
 Source: .\Styles\{#VCLStyle}; DestDir: {app}; Flags: dontcopy
-Source: .\{#YCEDependencies}\pikachu.bmp; Flags: dontcopy
-Source: .\{#YCEDependencies}\batman.bmp; Flags: dontcopy
-Source: .\{#YCEDependencies}\osetlarge.bmp; Flags: dontcopy
+; Here I load the common files needed in general applications
+Source: .\{#YCEDependencies}\horizontalbanner.bmp; Flags: dontcopy
 ; This is for extra dependencies
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Messages: This is to override default messages that exists in the installer
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 [Messages]
 WelcomeLabel1=Welcome to the OSET2020%nSetup Wizard!%n
 WelcomeLabel2=We can't wait to see you!%n%nThis wizard installs OSET 2020 Digital on your computer.%n%nPlease close all other applications before continuing the install.
@@ -91,6 +106,9 @@ ClickFinish=Click Finish to exit Setup and launch OSET2020
 DiskSpaceMBLabel=At least 800 MB of free disk space is required.
 SelectStartMenuFolderDesc=Where should Setup place the OSET2020 application's shortcuts?
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; CustomMessages: Add custom messages for labelling in the wizard
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 [CustomMessages]
 installation_form_Caption=OSET 2020 Installation setup
 installation_form_Description=Choose which type of installation you want to have
@@ -100,27 +118,46 @@ installation_form_Label1=Type the new Path to install the application
 installation_form_Edit1=DefaultDirName
 custom_install_form_Description=Choose which path where the app will install
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Icons: Creates and adds icons in specified folders
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 [Icons]
+; Application group section shortcut
 Name: "{group}\{#MyAppShortCut}"; Filename: "{app}\{#MyAppExeName}"
+; Desktop shortcut
 Name: "{commondesktop}\{#MyAppShortCut}"; Filename: "{app}\{#MyAppExeName}"
-; Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Dirs
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 [Dirs]
 Name: "{app}\"; Permissions: everyone-modify
 
-[UninstallDelete]
-Type: files; Name: "{app}\{#MyAppZip}"
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Run: What it should do when finishing the installer
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 [Run]
 ; Filename: "{app}\Engine\Extras\Redist\en-us\UE4PrereqSetup_x64.exe"; Parameters: "/install /quiet /norestart /silent"; Flags: runascurrentuser nowait postinstall
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: runascurrentuser nowait postinstall 
 // skipifsilent
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Code: Start of code
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 [Code]
 
-var FileList: TStringList;
-var size: Int64;
+// Global variables
+var 
+  FileList: TStringList;
+  size: Int64;
+  AdvanceInstall: TRadioButton;
+  ExpressInstall: TRadioButton;
+  useCustomInstall: Boolean;
+  HorizontalBanner: TBitmapImage;
+  CustomImage: TBitmapImage;
+  Page: TInputFileWizardPage;
 
+// Const values
 const
   SHCONTCH_NOPROGRESSBOX = 4;
   SHCONTCH_AUTORENAME = 8;
@@ -129,13 +166,17 @@ const
   SHCONTF_FOLDERS = 32;
   SHCONTF_NONFOLDERS = 64;
 
-// Import the LoadVCLStyle function from VclStylesInno.DLL
+// This functions are loaded from the VCLSTyle DLL to load custom skins
+// @brief: Import the LoadVCLStyle function from VclStylesInno.DLL
+// @param: VClStyleFile: String The name of the skin to load
 procedure LoadVCLStyle(VClStyleFile: String); external 'LoadVCLStyleW@files:VclStylesInno.dll stdcall';
-// Import the UnLoadVCLStyles function from VclStylesInno.DLL
+
+// @brief: Import the UnLoadVCLStyles function from VclStylesInno.DLL
 procedure UnLoadVCLStyles; external 'UnLoadVCLStyles@files:VclStylesInno.dll stdcall';
 
-
-// Queueries through the WMIC database
+// @brief: Queueries through the WMIC database
+// @param: WbemServices: Variant
+// @param: Query: String 
 function WbemQuery(WbemServices: Variant; Query: string): Variant;
 var
   WbemObjectSet: Variant;
@@ -148,8 +189,9 @@ begin
   end;
 end;
 
-// This is to check min specs in the computer to see if it is worth to install
-// The app on the computer in PC
+// @brief: This is to check min specs in the computer to see if it is worth to install
+//         The app on the computer in PC
+// @return: True if the computer has min specs or better, False if otherwise
 function CollectInformation : Boolean;
 var
   Query: string;
@@ -158,30 +200,37 @@ var
   IPAddresses: array of string;
   I, I2 : Integer;
   RAM, Disk, ClockSpeed : Extended;
-  // TempValue : string;
   MinRAM, MinDisk, MinClockSpeed : Extended;
 begin
 
+  // Minimum RAM required for the application to run in bytes
   MinRAM := 8000000000.00;
+  // Minimum Disk space required for the application to be stored
   MinDisk := 800000000.00;
+  // Minimum clock speed of the processor for the app to run
   MinClockSpeed := 1200.00;
 
+  // Default declaration of result
   Result:=True;
+
   WbemLocator := CreateOleObject('WbemScripting.SWbemLocator');
   WbemServices := WbemLocator.ConnectServer('.', 'root\CIMV2');
 
+  // CHECK FOR RAM
   Query := 'SELECT TotalPhysicalMemory FROM Win32_ComputerSystem';
   ComputerSystem := WbemQuery(WbemServices, Query);
+  
+  // If it was able to get the info of RAM in the computer
   if not VarIsNull(ComputerSystem) then
   begin
     Log(Format('TotalPhysicalMemory=%s', [ComputerSystem.TotalPhysicalMemory]));
-
-    // TempValue := Format('%s', [ComputerSystem.TotalPhysicalMemory]);
     RAM := StrToFloat(Format('%s', [ComputerSystem.TotalPhysicalMemory]));
-    // Log(Format('TempValue is %f', [RAM]));
-  
+    
+    // If the users RAM is less than the required RAM
     if RAM < MinRAM then
     begin
+      // The user can still continue with the installation even if the ram is 
+      // less than the minimum, but this way we warn the user about it
       if SuppressibleMsgBox('Your Machine has less than the minimum RAM '     + 
                             'required for the application to run properly. '  + 
                             '(You have ' + 
@@ -195,16 +244,20 @@ begin
     end;
   end;
 
+  // Check for DISK SPACE
   Query := 'SELECT FreeSpace FROM Win32_LogicalDisk';
   OperatingSystem := WbemQuery(WbemServices, Query);
+  
+  // If it was able to get the info of Disk Space in the computer
   if not VarIsNull(OperatingSystem) then
   begin
     Log(Format('FreeSpace=%s', [OperatingSystem.FreeSpace]));
-    
     Disk := StrToFloat(Format('%s', [OperatingSystem.FreeSpace]));
 
+    // If the user has less than the minimum required Disk
     if Disk < MinDisk then
     begin
+      // We have to warn the user about it, and that he has to free up some space
       if SuppressibleMsgBox('Your Machine has less than the required Disk Space ' + 
                             'to install the application '  + 
                             '(You have ' + 
@@ -218,24 +271,31 @@ begin
     end;
   end;
 
+  (*
   Query := 'SELECT Caption FROM Win32_OperatingSystem';
   OperatingSystem := WbemQuery(WbemServices, Query);
   if not VarIsNull(OperatingSystem) then
   begin
     Log(Format('OperatingSystem=%s', [OperatingSystem.Caption]));
   end;
+  *)
 
+  // Check for PROCESSOR
   Query := 'SELECT Name, MaxClockSpeed FROM Win32_Processor';
   Processor := WbemQuery(WbemServices, Query);
+  
+  // If it was able to get info of the processor
   if not VarIsNull(Processor) then
   begin
     Log(Format('Processor=%s', [Processor.Name]));
     Log(Format('MaxClockSpeed=%s', [Processor.MaxClockSpeed]));
-
     ClockSpeed := StrToFloat(Format('%s', [Processor.MaxClockSpeed]));
 
+    // To know if the processor is useful, we check the clock speed
+    // If the clock speed is less than the required
     if ClockSpeed < MinClockSpeed then
     begin
+      // Is most definetely that the user won't be able to run the app
       if SuppressibleMsgBox('Your Machines Processor is less than the ' + 
                             'required Processor '  + 
                             '(You have an ' + 
@@ -249,6 +309,7 @@ begin
       end;
     end;
   end;
+
   (*
   Query :=
     'SELECT IPEnabled, IPAddress, MACAddress FROM Win32_NetworkAdapterConfiguration';
@@ -275,17 +336,14 @@ begin
     *)
 end;
 
-var
-  AdvanceInstall: TRadioButton;
-  ExpressInstall: TRadioButton;
-  useCustomInstall: Boolean;
-  ExpressImage: TBitmapImage;
-  CustomImage: TBitmapImage;
-  Page: TInputFileWizardPage;
-
+// @brief: Checks if the user decided wheter to make an express or custom install
+// @param: Page: TWizardPage the page that has the button that activated this
+// @return: True
 function check_install_click(Page: TWizardPage) : Boolean;
 begin
   useCustomInstall := False;
+
+  // If the user decided to make a custom install
   if AdvanceInstall.Checked then
   begin
     useCustomInstall := True;
@@ -293,34 +351,45 @@ begin
   Result := True;
 end;
 
+// @brief: Default Inno setup initialization
 function InitializeSetup(): Boolean;
 begin
 	ExtractTemporaryFile('{#VCLStyle}');
 	LoadVCLStyle(ExpandConstant('{tmp}\{#VCLStyle}'));
   Result := True;
+
+  //If by any chance the hardware doesn't meet the minimum required specs
   if not CollectInformation then
   begin
+    // We inform that the application was not able to be installed in its computer
     SuppressibleMsgBox('OSET was not able to install on your PC', mbError, MB_OK, MB_OK);
     Result := False;
   end;
 end;
 
+// @brief: Default Inno setup de-initialization
 procedure DeinitializeSetup();
 begin
 	UnLoadVCLStyles;
 end;
 
 
-// This is to start downloading
+// @brief: Default Wizard initialization. This is to start the UI
 procedure InitializeWizard();
+
 var 
   i: Integer;
   requiredDiskSpace: TLabel;
   
 begin
-  ExtractTemporaryFile('osetlarge.bmp');
+  // Default variable definitions
+  useCustomInstall := False;
+
+  // Extract files
+  ExtractTemporaryFile('horizontalbanner.bmp');
   ExtractTemporaryFile('batman.bmp');
 
+  // Define Wizard UI variables
   WizardForm.CancelButton.Top := WizardForm.CancelButton.Top + 3;
   WizardForm.NextButton.Left := WizardForm.NextButton.Left - 5;
   WizardForm.BackButton.Left := WizardForm.BackButton.Left - 10;
@@ -338,18 +407,17 @@ begin
   //WizardForm.ClickFinish.Font.Style := [fsBold];
   //WizardForm.ClickFinish.Font.Size := 11;
 
+  // Creating a page for the installation type
   Page := CreateInputFilePage(
   wpWelcome, 'OSET 2020 Setup Wizard', 'Select Express Install or Custom Install location to choose where to install. Then click Next to continue',
   '' );
-  Page.OnNextButtonClick := @check_install_click;
-
-  useCustomInstall := False;
-   
-  ExpressImage := TBitmapImage.Create(Page);
-  with ExpressImage do
+  
+  // Creating the Horizontal Banner in the installer
+  HorizontalBanner := TBitmapImage.Create(Page);
+  with HorizontalBanner do
   begin
     Parent := Page.Surface;
-    Bitmap.LoadFromFile(ExpandConstant('{tmp}')+'\osetlarge.bmp');
+    Bitmap.LoadFromFile(ExpandConstant('{tmp}')+'\horizontalbanner.bmp');
     //AutoSize := True;
     Stretch := True;
     Left := 0;
@@ -358,6 +426,7 @@ begin
     Height := 200;
   end;
 
+  // Express install radio button option
   ExpressInstall := TRadioButton.Create(Page);
   with ExpressInstall do
   begin
@@ -373,6 +442,7 @@ begin
     TabStop := True;
   end;
  
+ // Custom install radio button option
   AdvanceInstall := TRadioButton.Create(Page);
   with AdvanceInstall do
   begin
@@ -386,13 +456,24 @@ begin
     TabOrder := 2;
   end;
   
+  // When clicking on next in the installation type setup define if
+  // The wizard skips the extra steps if chosen express
+  Page.OnNextButtonClick := @check_install_click;
+
+
+  // Initialize the information in the IDP DLL
   idpSetOption('InvalidCert', 'ShowDlg');
+  
   // idpDownloadFile('{#MyAppURL}/{#MyAppOS}/GameVersion.txt', ExpandConstant('{app}\GameVersion.txt'));
+  
   idpAddFile('{#MyAppURL}/{#MyAppOS}/{#MyAppZip}', ExpandConstant('{tmp}\{#MyAppZip}'));
   idpDownloadAfter(wpReady);
+  
+  // Defining the caption and description of the IDP Form
   IDPForm.Page.Caption := 'Downloading OSET2020 Content'; 
   IDPForm.Page.Description := 'Please wait while Setup downloads additional files...';
   
+  // Creating a label of the minimum required free space
   requiredDiskSpace := TLabel.Create(IDPForm.Page)
   with requiredDiskSpace do
   begin
@@ -405,13 +486,16 @@ begin
 
 end;
 
-// This is to unzip
+// @brief: This function is to unzip any file
+// @param: ZipFile: PAnsiChar the file to unzip
+// @param: TargetFldr: PAnsiChar the directory to save the unzipped files
 procedure unzip(ZipFile, TargetFldr: PAnsiChar);
 var
   shellobj: variant;
   ZipFileV, TargetFldrV: variant;
   SrcFldr, DestFldr: variant;
   shellfldritems: variant;
+
 begin
   if FileExists(ZipFile) then begin
     ForceDirectories(TargetFldr);
@@ -425,15 +509,18 @@ begin
   end;
 end;
 
+// @brief Installs any needed prerequisites before launching the Application
 procedure InstallFramework;
 var
   StatusText: string;
   ResultCode: Integer;
+
 begin
   StatusText := WizardForm.StatusLabel.Caption;
   WizardForm.StatusLabel.Caption := 'Installing UE4 Prerequisites...';
   WizardForm.ProgressGauge.Style := npbstMarquee;
   try
+    // Execute the command of the prerequisite
     if not Exec(ExpandConstant('{app}\Engine\Extras\Redist\en-us\UE4PrereqSetup_x64.exe'), '/install /quiet /norestart /q', '', SW_SHOW, ewWaitUntilTerminated, ResultCode) then
     begin
       { you can interact with the user that the installation failed }
