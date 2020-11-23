@@ -387,7 +387,6 @@ begin
 
   // Extract files
   ExtractTemporaryFile('horizontalbanner.bmp');
-  ExtractTemporaryFile('batman.bmp');
 
   // Define Wizard UI variables
   WizardForm.CancelButton.Top := WizardForm.CancelButton.Top + 3;
@@ -534,14 +533,14 @@ begin
   end;
 end;
 
+// @brief: Inno setup checks if it should skip a page with defined parameters
+// @param: PageID: Integer the id of the page to check if should skip
 function ShouldSkipPage(PageID: Integer): Boolean;
 begin
   { initialize result to not skip any page (not necessary, but safer) }
   Result := False;
-  { if the page that is asked to be skipped is your custom page, then... }
   if (PageID = wpSelectDir) and (not useCustomInstall) then
   begin
-    { if the component is not selected, skip the page }
     Result := True;
   end;
   if (PageID = wpReady) and (not useCustomInstall) then
