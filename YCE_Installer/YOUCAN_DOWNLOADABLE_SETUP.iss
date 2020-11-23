@@ -62,6 +62,8 @@ Type: filesandordirs; Name: "{app}"
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
+[LangOptions]
+
 [Tasks]
 ; Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}";
 
@@ -81,8 +83,13 @@ Source: .\{#YCEDependencies}\osetlarge.bmp; Flags: dontcopy
 ; This is for extra dependencies
 
 [Messages]
-WelcomeLabel1=Welcome to the OSET2020 Setup Wizard!
-WelcomeLabel2=We can't wait to see you! %n%n This wizard installs OSET 2020 Digital on your computer. %n%n Please close all other applications before continuing the install.
+WelcomeLabel1=Welcome to the OSET2020%nSetup Wizard!%n
+WelcomeLabel2=We can't wait to see you!%n%nThis wizard installs OSET 2020 Digital on your computer.%n%nPlease close all other applications before continuing the install.
+FinishedHeadingLabel=%nOSET2020 Setup Complete
+FinishedLabel=The OSET2020 installation is complete.%n%nPlease jois us in the Virtual World by clicking on the OSET2020 application shortcut installed on your computer.
+ClickFinish=Click Finish to exit Setup and launch OSET2020
+DiskSpaceMBLabel=At least 800 MB of free disk space is required.
+SelectStartMenuFolderDesc=Where should Setup place the OSET2020 application's shortcuts?
 
 [CustomMessages]
 installation_form_Caption=OSET 2020 Installation setup
@@ -308,15 +315,32 @@ end;
 procedure InitializeWizard();
 var 
   i: Integer;
+  requiredDiskSpace: TLabel;
   
 begin
   ExtractTemporaryFile('osetlarge.bmp');
+  ExtractTemporaryFile('batman.bmp');
 
+  WizardForm.CancelButton.Top := WizardForm.CancelButton.Top + 3;
+  WizardForm.NextButton.Left := WizardForm.NextButton.Left - 5;
+  WizardForm.BackButton.Left := WizardForm.BackButton.Left - 10;
+  WizardForm.WelcomeLabel1.Font.Style := [fsBold];
+  WizardForm.WelcomeLabel1.Font.Size := 14;
+  //WizardForm.WelcomeLabel2.Font.Style := [fsBold];
+  WizardForm.WelcomeLabel2.Font.Size := 11;
+  WizardForm.PageNameLabel.Font.Size := 9;
+  WizardForm.PageDescriptionLabel.Font.Size := 9;
+  //WizardForm.PageDescriptionLabel.Font.Style := [fsBold];
+  WizardForm.FinishedHeadingLabel.Font.Style := [fsBold];
+  WizardForm.FinishedHeadingLabel.Font.Size := 14;
+  //WizardForm.FinishedLabel.Font.Style := [fsBold]
+  WizardForm.FinishedLabel.Font.Size := 11;
+  //WizardForm.ClickFinish.Font.Style := [fsBold];
+  //WizardForm.ClickFinish.Font.Size := 11;
 
   Page := CreateInputFilePage(
   wpWelcome, 'OSET 2020 Setup Wizard', 'Select Express Install or Custom Install location to choose where to install. Then click Next to continue',
   '' );
-
   Page.OnNextButtonClick := @check_install_click;
 
   useCustomInstall := False;
@@ -333,23 +357,11 @@ begin
     Width := Page.SurfaceWidth;
     Height := 200;
   end;
- (*
-  CustomImage := TBitmapImage.Create(Page);
-  with CustomImage do
-  begin
-    Parent := Page.Surface;
-    Bitmap.LoadFromFile(ExpandConstant('{tmp}')+'\pikachu.bmp');
-    //AutoSize := True;
-    Stretch := True;
-    Left := ScaleX(225);
-    Top := ScaleY(50);
-    Width := ScaleX(200);
-    Height := ScaleY(200);
-  end;*)
 
   ExpressInstall := TRadioButton.Create(Page);
   with ExpressInstall do
   begin
+    Font.Size := 9;
     Parent := Page.Surface;
     Caption := ExpandConstant('{cm:installation_form_WindowsRadioButton_Caption0}');
     Left := ScaleX(0);
@@ -364,6 +376,7 @@ begin
   AdvanceInstall := TRadioButton.Create(Page);
   with AdvanceInstall do
   begin
+    Font.Size := 9;
     Parent := Page.Surface;
     Caption := ExpandConstant('{cm:installation_form_SqlRadioButton_Caption0}');
     Left := ScaleX(225);
@@ -377,6 +390,19 @@ begin
   // idpDownloadFile('{#MyAppURL}/{#MyAppOS}/GameVersion.txt', ExpandConstant('{app}\GameVersion.txt'));
   idpAddFile('{#MyAppURL}/{#MyAppOS}/{#MyAppZip}', ExpandConstant('{tmp}\{#MyAppZip}'));
   idpDownloadAfter(wpReady);
+  IDPForm.Page.Caption := 'Downloading OSET2020 Content'; 
+  IDPForm.Page.Description := 'Please wait while Setup downloads additional files...';
+  
+  requiredDiskSpace := TLabel.Create(IDPForm.Page)
+  with requiredDiskSpace do
+  begin
+    Parent := IDPForm.Page.Surface;
+    Caption := 'At least 800 MB of free disk space is required.';
+    Left := ScaleX(0);
+    Top := ScaleY(200);
+    Font.Size := 9; 
+  end;
+
 end;
 
 // This is to unzip
