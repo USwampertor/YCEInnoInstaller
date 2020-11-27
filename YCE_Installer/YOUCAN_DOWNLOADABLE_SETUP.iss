@@ -40,7 +40,7 @@
 ; AppId={{6FDB17A1-9AE3-4460-94E3-1801594998F4}
 ; App ID for OSET
 AppId={{5ACBA2B4-A874-461C-A898-863DCC1EDC21}}
-AppName={#MyAppShortcut}
+AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppVerName={#MyAppName}                
 AppPublisher={#MyAppPublisher}
@@ -99,13 +99,13 @@ Source: .\{#YCEDependencies}\horizontalbanner.bmp; Flags: dontcopy
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 [Messages]
 WelcomeLabel1=Welcome to the OSET2020%nSetup Wizard!%n
-WelcomeLabel2=We can't wait to see you!%n%nThis wizard installs OSET 2020 Digital on your computer.%n%nPlease close all other applications and file explorers before continuing the install.
+WelcomeLabel2=We can't wait to see you!%n%nThis wizard installs OSET 2020 Digital on your computer.%n%nPlease close all other applications and File Explorers before continuing the install.
 FinishedHeadingLabel=%nOSET2020 Setup Complete
 FinishedLabel=The OSET2020 installation is complete.%n%nPlease jois us in the Virtual World by clicking on the OSET2020 application shortcut installed on your computer.
 ClickFinish=Click Finish to exit Setup and launch OSET2020
 DiskSpaceMBLabel=At least 2000 MB of free disk space is required.
 SelectStartMenuFolderDesc=Where should Setup place the OSET2020 application's shortcuts?
-
+WizardSelectDir=Select Destination Location for Custom Install
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; CustomMessages: Add custom messages for labelling in the wizard
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -116,7 +116,7 @@ installation_form_WindowsRadioButton_Caption0=Express Install
 installation_form_SqlRadioButton_Caption0=Custom Install Location
 installation_form_Label1=Type the new Path to install the application
 installation_form_Edit1=DefaultDirName
-installation_form_Notice=Select express install unless instructed/advised by Support Team%nto do a custom installation.
+installation_form_Notice=Select Express Install unless instructed/advised by Support Staff%nto do a Custom Installation Location.
 custom_install_form_Description=Choose which path where the app will install
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
