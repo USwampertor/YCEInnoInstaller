@@ -7,7 +7,7 @@
 ; DEFINES
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Common Defines for the application
-#define MyAppName "OSET 2020 Installer"
+#define MyAppName "OSET 2020 Installer - Click Here"
 #define MyAppShortCut "OSET2020"
 #define MyAppVersion "1.1.0.0"
 #define MyAppPublisher "Youcanevent"
@@ -99,11 +99,11 @@ Source: .\{#YCEDependencies}\horizontalbanner.bmp; Flags: dontcopy
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 [Messages]
 WelcomeLabel1=Welcome to the OSET2020%nSetup Wizard!%n
-WelcomeLabel2=We can't wait to see you!%n%nThis wizard installs OSET 2020 Digital on your computer.%n%nPlease close all other applications before continuing the install.
+WelcomeLabel2=We can't wait to see you!%n%nThis wizard installs OSET 2020 Digital on your computer.%n%nPlease close all other applications and file explorers before continuing the install.
 FinishedHeadingLabel=%nOSET2020 Setup Complete
 FinishedLabel=The OSET2020 installation is complete.%n%nPlease jois us in the Virtual World by clicking on the OSET2020 application shortcut installed on your computer.
 ClickFinish=Click Finish to exit Setup and launch OSET2020
-DiskSpaceMBLabel=At least 800 MB of free disk space is required.
+DiskSpaceMBLabel=At least 2000 MB of free disk space is required.
 SelectStartMenuFolderDesc=Where should Setup place the OSET2020 application's shortcuts?
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -116,6 +116,7 @@ installation_form_WindowsRadioButton_Caption0=Express Install
 installation_form_SqlRadioButton_Caption0=Custom Install Location
 installation_form_Label1=Type the new Path to install the application
 installation_form_Edit1=DefaultDirName
+installation_form_Notice=Select express install unless instructed/advised by Support Team%nto do a custom installation.
 custom_install_form_Description=Choose which path where the app will install
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -156,6 +157,7 @@ var
   HorizontalBanner: TBitmapImage;
   CustomImage: TBitmapImage;
   Page: TInputFileWizardPage;
+  NoticeLabel : TLabel;
 
 // Const values
 const
@@ -165,7 +167,7 @@ const
   SHCONTF_INCLUDEHIDDEN = 128;
   SHCONTF_FOLDERS = 32;
   SHCONTF_NONFOLDERS = 64;
-
+  WM_CLOSE = 16;
 // This functions are loaded from the VCLSTyle DLL to load custom skins
 // @brief: Import the LoadVCLStyle function from VclStylesInno.DLL
 // @param: VClStyleFile: String The name of the skin to load
@@ -199,16 +201,20 @@ var
   ComputerSystem, OperatingSystem, Processor, NetworkAdapters, NetworkAdapter: Variant;
   IPAddresses: array of string;
   I, I2 : Integer;
-  RAM, Disk, ClockSpeed : Extended;
-  MinRAM, MinDisk, MinClockSpeed : Extended;
+  RAM, Disk, ClockSpeed, VRAM : Extended;
+  MinRAM, MinDisk, MinClockSpeed, MinVRAM : Extended;
+  Name, Substr : string;
+  Family: Integer;
 begin
 
   // Minimum RAM required for the application to run in bytes
   MinRAM := 8000000000.00;
   // Minimum Disk space required for the application to be stored
-  MinDisk := 800000000.00;
+  MinDisk := 2000000000.00;
   // Minimum clock speed of the processor for the app to run
-  MinClockSpeed := 1200.00;
+  MinClockSpeed := 2400.00;
+  // Minimum VRAM required for the application to run in bytes
+  MinVRAM := 2000000000.00;
 
   // Default declaration of result
   Result:=True;
@@ -271,6 +277,34 @@ begin
     end;
   end;
 
+  // Check for VRAM
+  Query := 'SELECT AdapterRAM, Caption FROM Win32_VideoController';
+  OperatingSystem := WbemQuery(WbemServices, Query);
+  
+  // If it was able to get the info of VRAM in the computer
+  if not VarIsNull(OperatingSystem) then
+  begin
+    Log(Format('VRAM=%s', [OperatingSystem.AdapterRAM]));
+    Log(Format('Graphics Card=%s', [OperatingSystem.Caption]));
+    VRAM := StrToFloat(Format('%s', [OperatingSystem.AdapterRAM]));
+
+    // If the user has less than the minimum required Disk
+    if VRAM < MinVRAM then
+    begin
+      // We have to warn the user about it, and that he has to free up some space
+      if SuppressibleMsgBox('Your Machine has less than the required Video Memory ' + 
+                            'to install the application '  + 
+                            '(You have ' + 
+                            Format('%.0f MB', [VRAM / (1000*1000)]) + 
+                            ' and min required is ' + 
+                            Format('%.0f MB', [MinVRAM / (1000*1000)])      + 
+                            ') Are you sure you want to continue?', mbError, MB_YESNO, IDYES) = IDNO then
+      begin
+        Result := False;
+      end;
+    end;
+  end;
+
   (*
   Query := 'SELECT Caption FROM Win32_OperatingSystem';
   OperatingSystem := WbemQuery(WbemServices, Query);
@@ -281,7 +315,7 @@ begin
   *)
 
   // Check for PROCESSOR
-  Query := 'SELECT Name, MaxClockSpeed FROM Win32_Processor';
+  Query := 'SELECT Name, MaxClockSpeed, Family FROM Win32_Processor';
   Processor := WbemQuery(WbemServices, Query);
   
   // If it was able to get info of the processor
@@ -289,21 +323,50 @@ begin
   begin
     Log(Format('Processor=%s', [Processor.Name]));
     Log(Format('MaxClockSpeed=%s', [Processor.MaxClockSpeed]));
+    Log(Format('Family=%s', [Processor.Family]));
     ClockSpeed := StrToFloat(Format('%s', [Processor.MaxClockSpeed]));
+    Family := StrToInt(Format('%s', [Processor.Family]));
+    Name := Format('%s', [Processor.Name]);
+    Log(Name);
+    // Checks if processor is intel
+    if not (Pos('Intel', Name) = 0) then
+    begin
+      Substr := Copy(Name, Pos('(TM) ', Name) + 5, 2);
+      Log(Substr);
+    end
+    else
+
+
+    begin
+
+    end;
+
+    // The computer is an i3 or celeron 
+    if (Family = 206) or (Family = 199) or (Family < 198) then
+    begin
+        if SuppressibleMsgBox('Your Processor is less than the '     + 
+                              'required Processor '  + 
+                              Name +  
+                              ' and min required is ' + 
+                              'Intel(R) Core(TM) i5 processor) ' + 
+                              'Are you sure you want to continue?', mbError, MB_YESNO, IDYES) = IDNO then
+      begin
+        Result := False;
+      end;
+    end; 
 
     // To know if the processor is useful, we check the clock speed
     // If the clock speed is less than the required
     if ClockSpeed < MinClockSpeed then
     begin
       // Is most definetely that the user won't be able to run the app
-      if SuppressibleMsgBox('Your Machines Processor is less than the ' + 
-                            'required Processor '  + 
+      if SuppressibleMsgBox('Your Clock Speed is less than the ' + 
+                            'required Clock Speed '  + 
                             '(You have an ' + 
                             Format('%s', [Processor.Name]) + 
                             ' with Clock Speed of ' + 
-                            Format('%.0f GH', [ClockSpeed / 100])      + 
-                            ') Please get in contact with your event' + 
-                            ' provider', mbCriticalError, MB_OK, MB_OK) = IDOK then
+                            Format('%.0f GHz', [ClockSpeed / 1000])      + 
+                            ') Are you sure you want to continue?', mbError, MB_YESNO, IDYES) = IDNO then
       begin
         Result := False;
       end;
@@ -353,6 +416,12 @@ end;
 
 // @brief: Default Inno setup initialization
 function InitializeSetup(): Boolean;
+
+var 
+  winHwnd: Longint;
+  retVal : Boolean;
+  strProg: string;
+
 begin
 	ExtractTemporaryFile('{#VCLStyle}');
 	LoadVCLStyle(ExpandConstant('{tmp}\{#VCLStyle}'));
@@ -364,6 +433,19 @@ begin
     // We inform that the application was not able to be installed in its computer
     SuppressibleMsgBox('OSET was not able to install on your PC', mbError, MB_OK, MB_OK);
     Result := False;
+  end;
+
+  try
+    //Either use FindWindowByClassName. ClassName can be found with Spy++ included with Visual C++. 
+    strProg := 'UnrealWindow';
+    winHwnd := FindWindowByClassName(strProg);
+    //Or FindWindowByWindowName.  If using by Name, the name must be exact and is case sensitive.
+    //strProg := 'Youcan - OSET';
+    //winHwnd := FindWindowByWindowName(strProg);
+    Log('winHwnd: ' + IntToStr(winHwnd));
+    if winHwnd <> 0 then
+      Result := PostMessage(winHwnd,WM_CLOSE,0,0);
+  except
   end;
 end;
 
@@ -420,9 +502,9 @@ begin
     //AutoSize := True;
     Stretch := True;
     Left := 0;
-    Top := 50;
+    Top := 75;
     Width := Page.SurfaceWidth;
-    Height := 200;
+    Height := 175;
   end;
 
   // Express install radio button option
@@ -433,8 +515,8 @@ begin
     Parent := Page.Surface;
     Caption := ExpandConstant('{cm:installation_form_WindowsRadioButton_Caption0}');
     Left := ScaleX(0);
-    Top := ScaleY(20);
-    Width := ScaleX(225);
+    Top := ScaleY(10);
+    Width := ScaleX(230);
     Height := ScaleY(17);
     Checked := True;
     TabOrder := 1;
@@ -449,12 +531,25 @@ begin
     Parent := Page.Surface;
     Caption := ExpandConstant('{cm:installation_form_SqlRadioButton_Caption0}');
     Left := ScaleX(225);
-    Top := ScaleY(20);
-    Width := ScaleX(193);
+    Top := ScaleY(10);
+    Width := ScaleX(200);
     Height := ScaleY(17);
     TabOrder := 2;
   end;
   
+  NoticeLabel := TLabel.Create(Page);
+  with NoticeLabel do
+  begin
+    Font.Size := 9;
+    Font.Color := clWhite;
+    Parent := Page.Surface;
+    Caption := ExpandConstant('{cm:installation_form_Notice}');
+    Left := ScaleX(0);
+    Top := ScaleY(40);
+    Width := Page.SurfaceWidth;
+    Height := ScaleY(50);
+  end;
+
   // When clicking on next in the installation type setup define if
   // The wizard skips the extra steps if chosen express
   Page.OnNextButtonClick := @check_install_click;
@@ -477,7 +572,7 @@ begin
   with requiredDiskSpace do
   begin
     Parent := IDPForm.Page.Surface;
-    Caption := 'At least 800 MB of free disk space is required.';
+    Caption := 'At least 2000 MB of free disk space is required.';
     Left := ScaleX(0);
     Top := ScaleY(200);
     Font.Size := 9; 
@@ -494,8 +589,16 @@ var
   ZipFileV, TargetFldrV: variant;
   SrcFldr, DestFldr: variant;
   shellfldritems: variant;
+  StatusText: string;
+  ResultCode: Integer;
 
 begin
+  
+  StatusText := WizardForm.StatusLabel.Caption;
+  WizardForm.StatusLabel.Caption := 'Unzipping file...';
+  WizardForm.ProgressGauge.Style := npbstMarquee;
+
+
   if FileExists(ZipFile) then begin
     ForceDirectories(TargetFldr);
     shellobj := CreateOleObject('Shell.Application');
@@ -506,6 +609,9 @@ begin
     shellfldritems := SrcFldr.Items;
     DestFldr.CopyHere(shellfldritems, SHCONTCH_NOPROGRESSBOX or SHCONTCH_RESPONDYESTOALL);  
   end;
+
+    WizardForm.StatusLabel.Caption := StatusText;
+    WizardForm.ProgressGauge.Style := npbstNormal;
 end;
 
 // @brief Installs any needed prerequisites before launching the Application
