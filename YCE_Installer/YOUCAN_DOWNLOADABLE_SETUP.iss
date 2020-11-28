@@ -237,13 +237,13 @@ begin
     begin
       // The user can still continue with the installation even if the ram is 
       // less than the minimum, but this way we warn the user about it
-      if SuppressibleMsgBox('Your Machine has less than the minimum RAM '     + 
-                            'required for the application to run properly. '  + 
+      if SuppressibleMsgBox('Your Computer has less than the minimum Memory ' + 
+                            'required for the application to run properly.' + #13#10 + 
                             '(You have ' + 
-                            Format('%.0f GB', [RAM / (1000*1000*1000)]) + 
-                            ' and min required is ' + 
-                            Format('%.0f GB', [MinRAM / (1000*1000*1000)])      + 
-                            ')Are you sure you want to continue?', mbError, MB_YESNO, IDYES) = IDNO then
+                            Format('%.02f GB', [RAM / (1000*1000*1000)]) + 
+                            ' and the minimum required is ' + 
+                            Format('%.02f GB', [MinRAM / (1000*1000*1000)]) + ')' + #13#10 + 
+                            'Do you wish to continue?', mbError, MB_YESNO, IDYES) = IDNO then
       begin
         Result := False;
       end;
@@ -264,13 +264,14 @@ begin
     if Disk < MinDisk then
     begin
       // We have to warn the user about it, and that he has to free up some space
-      if SuppressibleMsgBox('Your Machine has less than the required Disk Space ' + 
-                            'to install the application '  + 
+      if SuppressibleMsgBox('Your Computer has less than the required Disk Space ' + 
+                            'to install the application. '  + #13#10 +
                             '(You have ' + 
-                            Format('%.0f MB', [Disk / (1000*1000)]) + 
-                            ' and min required is ' + 
-                            Format('%.0f MB', [MinDisk / (1000*1000)])      + 
-                            ') Please free up some space', mbCriticalError, MB_OK, MB_OK) = IDOK then
+                            Format('%.0f MB', [Disk / (1000*1000)]) + 'of space ' +
+                            ' and the minimum required is ' + 
+                            Format('%.0f MB', [MinDisk / (1000*1000)]) + #13#10 + 
+                            ') Please free up some space before executing ' +
+                            ' this installer again', mbCriticalError, MB_OK, MB_OK) = IDOK then
       begin
         Result := False;
       end;
@@ -288,21 +289,27 @@ begin
     Log(Format('Graphics Card=%s', [OperatingSystem.Caption]));
     VRAM := StrToFloat(Format('%s', [OperatingSystem.AdapterRAM]));
 
-    // If the user has less than the minimum required Disk
-    if VRAM < MinVRAM then
+
+    if  VRAM > 0.0 then
     begin
-      // We have to warn the user about it, and that he has to free up some space
-      if SuppressibleMsgBox('Your Machine has less than the required Video Memory ' + 
-                            'to install the application '  + 
-                            '(You have ' + 
-                            Format('%.0f MB', [VRAM / (1000*1000)]) + 
-                            ' and min required is ' + 
-                            Format('%.0f MB', [MinVRAM / (1000*1000)])      + 
-                            ') Are you sure you want to continue?', mbError, MB_YESNO, IDYES) = IDNO then
+      // If the user has less than the minimum required Disk
+      if VRAM < MinVRAM then
       begin
-        Result := False;
+        // We have to warn the user about it, and that he has to free up some space
+        if SuppressibleMsgBox('Your Computer''s Video card is below the minimum ' + 
+                            'required for the application to run properly.'  + #13#10 +
+                            '(You have a Video Card Memory of ' + 
+                            Format('%.02f MB', [VRAM / (1000*1000)]) +
+                            ' and the minimum required is ' + 
+                            Format('%.02f MB', [MinVRAM / (1000*1000)]) + ')' + #13#10 + 
+                            'Do you wish to continue?', mbError, MB_YESNO, IDYES) = IDNO then
+        begin
+          Result := False;
+        end;
       end;
     end;
+
+    
   end;
 
   (*
@@ -328,45 +335,62 @@ begin
     Family := StrToInt(Format('%s', [Processor.Family]));
     Name := Format('%s', [Processor.Name]);
     Log(Name);
+
     // Checks if processor is intel
     if not (Pos('Intel', Name) = 0) then
     begin
       Substr := Copy(Name, Pos('(TM) ', Name) + 5, 2);
       Log(Substr);
+
+      // The computer is an i3 or celeron 
+      if (Family = 206) or (Family = 199) or (Family < 198) then
+      begin
+        if SuppressibleMsgBox('Your Processor is less than the minimum '     + 
+                              'required for the application to run properly.'  + #13#10 +
+                              '(You have a Processor Family ' +  
+                              Name +  
+                              ' and the minimum required is ' + 
+                              'Intel(R) Core(TM) i5 processor) ' + #13#10 + 
+                              'Do you wish to continue?', mbError, MB_YESNO, IDYES) = IDNO then
+        begin
+          Result := False;
+        end;
+      end;
+
     end
+    // If it is AMD
     else
-
-
     begin
-
+        // The computer is AMD
+        if False then
+      begin
+        if SuppressibleMsgBox('Your Processor is less than the minimum '     + 
+                              'required for the application to run properly.'  + #13#10 +
+                              '(You have a Processor Family ' +  
+                              Name +  
+                              ' and the minimum required is ' + 
+                              'Intel(R) Core(TM) i5 processor) ' + #13#10 + 
+                              'Do you wish to continue?', mbError, MB_YESNO, IDYES) = IDNO then
+        begin
+          Result := False;
+        end;
+      end;
     end;
 
-    // The computer is an i3 or celeron 
-    if (Family = 206) or (Family = 199) or (Family < 198) then
-    begin
-        if SuppressibleMsgBox('Your Processor is less than the '     + 
-                              'required Processor '  + 
-                              Name +  
-                              ' and min required is ' + 
-                              'Intel(R) Core(TM) i5 processor) ' + 
-                              'Are you sure you want to continue?', mbError, MB_YESNO, IDYES) = IDNO then
-      begin
-        Result := False;
-      end;
-    end; 
+ 
 
     // To know if the processor is useful, we check the clock speed
     // If the clock speed is less than the required
     if ClockSpeed < MinClockSpeed then
     begin
       // Is most definetely that the user won't be able to run the app
-      if SuppressibleMsgBox('Your Clock Speed is less than the ' + 
-                            'required Clock Speed '  + 
-                            '(You have an ' + 
-                            Format('%s', [Processor.Name]) + 
-                            ' with Clock Speed of ' + 
-                            Format('%.0f GHz', [ClockSpeed / 1000])      + 
-                            ') Are you sure you want to continue?', mbError, MB_YESNO, IDYES) = IDNO then
+      if SuppressibleMsgBox('Your Clock Speed is less than the minimum ' + 
+                            'required for the application to run properly. '  + #13#10 + 
+                            '(You have a Clock speed ' + 
+                            Format('%.02f GHz', [ClockSpeed / 1000]) + 
+                            ' and minimum required is ' + 
+                            Format('%.02f GHz', [MinClockSpeed / 1000])+ ')' + #13#10 + 
+                            'Do you wish to continue?', mbError, MB_YESNO, IDYES) = IDNO then
       begin
         Result := False;
       end;
