@@ -63,7 +63,8 @@ DisableProgramGroupPage=no
 DisableReadyPage=no
 WizardSmallImageFile={#YCEDependencies}\small.bmp
 WizardImageFile={#YCEDependencies}\verticalbanner.bmp
-
+CloseApplications=force
+//ArchitecturesInstallIn64BitMode=x64
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; UninstallDelete
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -198,10 +199,11 @@ function CollectInformation : Boolean;
 var
   Query: string;
   WbemLocator, WbemServices: Variant;
-  ComputerSystem, OperatingSystem, Processor, NetworkAdapters, NetworkAdapter: Variant;
+  ComputerSystem, OperatingSystem, Processor, VideoControllers, VideoController, NetworkAdapters, NetworkAdapter: Variant;
   IPAddresses: array of string;
-  I, I2 : Integer;
+  I, I2 : Int64;
   RAM, Disk, ClockSpeed, VRAM : Extended;
+  IVRAM :Integer;
   MinRAM, MinDisk, MinClockSpeed, MinVRAM : Extended;
   Name, Substr : string;
   Family: Integer;
@@ -280,17 +282,38 @@ begin
 
   // Check for VRAM
   Query := 'SELECT AdapterRAM, Caption FROM Win32_VideoController';
-  OperatingSystem := WbemQuery(WbemServices, Query);
+  VideoControllers := WbemServices.ExecQuery(Query);
   
   // If it was able to get the info of VRAM in the computer
-  if not VarIsNull(OperatingSystem) then
+  
+  VRAM := 0.0;
+  if not VarIsNull(VideoControllers) then
   begin
-    Log(Format('VRAM=%s', [OperatingSystem.AdapterRAM]));
-    Log(Format('Graphics Card=%s', [OperatingSystem.Caption]));
-    VRAM := StrToFloat(Format('%s', [OperatingSystem.AdapterRAM]));
+    for I := 0 to VideoControllers.Count - 1 do
+    begin
+      VideoController := VideoControllers.ItemIndex(I);
 
+      if (not VarIsNull(VideoController.AdapterRAM)) then
+      begin
+        Log(Format('%s', [VideoController.AdapterRAM]));
+        Log(Format('Graphics Card=%s', [VideoController.Caption]));
 
-    if  VRAM > 0.0 then
+        if (VRAM < StrToFloat(Format('%s', [VideoController.AdapterRAM]))) or
+            (StrToFloat(Format('%s', [VideoController.AdapterRAM])) < -1024.0) then
+        begin
+          //IVRAM := StrToInt64(Format('%s', [VideoController.AdapterRAM]));
+          VRAM := StrToFloat(Format('%s', [VideoController.AdapterRAM])); 
+        end;
+      end;
+
+    end;
+
+    if VRAM < -1024.0 then
+    begin
+      VRAM := 4000000000;
+    end;
+
+    if  VRAM > 0 then
     begin
       // If the user has less than the minimum required Disk
       if VRAM < MinVRAM then
@@ -451,15 +474,8 @@ begin
 	LoadVCLStyle(ExpandConstant('{tmp}\{#VCLStyle}'));
   Result := True;
 
-  //If by any chance the hardware doesn't meet the minimum required specs
-  if not CollectInformation then
-  begin
-    // We inform that the application was not able to be installed in its computer
-    SuppressibleMsgBox('OSET was not able to install on your PC', mbError, MB_OK, MB_OK);
-    Result := False;
-  end;
-
   try
+    Repeat
     //Either use FindWindowByClassName. ClassName can be found with Spy++ included with Visual C++. 
     strProg := 'UnrealWindow';
     winHwnd := FindWindowByClassName(strProg);
@@ -469,8 +485,18 @@ begin
     Log('winHwnd: ' + IntToStr(winHwnd));
     if winHwnd <> 0 then
       Result := PostMessage(winHwnd,WM_CLOSE,0,0);
+    Until not (winHwnd <> 0);
   except
   end;
+
+  //If by any chance the hardware doesn't meet the minimum required specs
+  if not CollectInformation then
+  begin
+    // We inform that the application was not able to be installed in its computer
+    SuppressibleMsgBox('OSET was not able to install on your PC', mbError, MB_OK, MB_OK);
+    Result := False;
+  end;
+  
 end;
 
 // @brief: Default Inno setup de-initialization
