@@ -102,7 +102,7 @@ Source: .\{#YCEDependencies}\horizontalbanner.bmp; Flags: dontcopy
 WelcomeLabel1=Welcome to the OSET2020%nSetup Wizard!%n
 WelcomeLabel2=We can't wait to see you!%n%nThis wizard installs OSET 2020 Digital on your computer.%n%nPlease close all other applications and File Explorers before continuing the install.
 FinishedHeadingLabel=%nOSET2020 Setup Complete
-FinishedLabel=The OSET2020 installation is complete.%n%nPlease jois us in the Virtual World by clicking on the OSET2020 application shortcut installed on your computer.
+FinishedLabel=The OSET2020 installation is complete.%n%nPlease join us in the Virtual World by clicking on the OSET2020 application shortcut installed on your computer.
 ClickFinish=Click Finish to exit Setup and launch OSET2020
 DiskSpaceMBLabel=At least 2000 MB of free disk space is required.
 SelectStartMenuFolderDesc=Where should Setup place the OSET2020 application's shortcuts?
@@ -241,10 +241,10 @@ begin
       // less than the minimum, but this way we warn the user about it
       if SuppressibleMsgBox('Your Computer has less than the minimum Memory ' + 
                             'required for the application to run properly.' + #13#10 + 
-                            '(You have ' + 
+                            'You have ' + 
                             Format('%.02f GB', [RAM / (1000*1000*1000)]) + 
                             ' and the minimum required is ' + 
-                            Format('%.02f GB', [MinRAM / (1000*1000*1000)]) + ')' + #13#10 + 
+                            Format('%.02f GB', [MinRAM / (1000*1000*1000)]) + #13#10 + 
                             'Do you wish to continue?', mbError, MB_YESNO, IDYES) = IDNO then
       begin
         Result := False;
@@ -268,11 +268,11 @@ begin
       // We have to warn the user about it, and that he has to free up some space
       if SuppressibleMsgBox('Your Computer has less than the required Disk Space ' + 
                             'to install the application. '  + #13#10 +
-                            '(You have ' + 
+                            'You have ' + 
                             Format('%.0f MB', [Disk / (1000*1000)]) + 'of space ' +
                             ' and the minimum required is ' + 
                             Format('%.0f MB', [MinDisk / (1000*1000)]) + #13#10 + 
-                            ') Please free up some space before executing ' +
+                            'Please free up some space before executing ' +
                             ' this installer again', mbCriticalError, MB_OK, MB_OK) = IDOK then
       begin
         Result := False;
@@ -321,10 +321,10 @@ begin
         // We have to warn the user about it, and that he has to free up some space
         if SuppressibleMsgBox('Your Computer''s Video card is below the minimum ' + 
                             'required for the application to run properly.'  + #13#10 +
-                            '(You have a Video Card Memory of ' + 
+                            'You have a Video Card Memory of ' + 
                             Format('%.02f MB', [VRAM / (1000*1000)]) +
                             ' and the minimum required is ' + 
-                            Format('%.02f MB', [MinVRAM / (1000*1000)]) + ')' + #13#10 + 
+                            Format('%.02f MB', [MinVRAM / (1000*1000)]) + #13#10 + 
                             'Do you wish to continue?', mbError, MB_YESNO, IDYES) = IDNO then
         begin
           Result := False;
@@ -370,10 +370,10 @@ begin
       begin
         if SuppressibleMsgBox('Your Processor is less than the minimum '     + 
                               'required for the application to run properly.'  + #13#10 +
-                              '(You have a Processor Family ' +  
+                              'You have a Processor Family ' +  
                               Name +  
                               ' and the minimum required is ' + 
-                              'Intel(R) Core(TM) i5 processor) ' + #13#10 + 
+                              'Intel(R) Core(TM) i5 processor' + #13#10 + 
                               'Do you wish to continue?', mbError, MB_YESNO, IDYES) = IDNO then
         begin
           Result := False;
@@ -389,10 +389,10 @@ begin
       begin
         if SuppressibleMsgBox('Your Processor is less than the minimum '     + 
                               'required for the application to run properly.'  + #13#10 +
-                              '(You have a Processor Family ' +  
+                              'You have a Processor Family ' +  
                               Name +  
                               ' and the minimum required is ' + 
-                              'Intel(R) Core(TM) i5 processor) ' + #13#10 + 
+                              'Intel(R) Core(TM) i5 processor' + #13#10 + 
                               'Do you wish to continue?', mbError, MB_YESNO, IDYES) = IDNO then
         begin
           Result := False;
@@ -409,10 +409,10 @@ begin
       // Is most definetely that the user won't be able to run the app
       if SuppressibleMsgBox('Your Clock Speed is less than the minimum ' + 
                             'required for the application to run properly. '  + #13#10 + 
-                            '(You have a Clock speed ' + 
+                            'You have a Clock speed ' + 
                             Format('%.02f GHz', [ClockSpeed / 1000]) + 
                             ' and minimum required is ' + 
-                            Format('%.02f GHz', [MinClockSpeed / 1000])+ ')' + #13#10 + 
+                            Format('%.02f GHz', [MinClockSpeed / 1000]) + #13#10 + 
                             'Do you wish to continue?', mbError, MB_YESNO, IDYES) = IDNO then
       begin
         Result := False;
