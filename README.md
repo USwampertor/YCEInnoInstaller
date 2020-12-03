@@ -5,23 +5,29 @@ Built using Inno Script Studio
 
 ## Brief
 
-This is an installer "template" to be used for Youcanevent in Inno setup.
+This is an installer created for Youcanevent to work as a "template" to be used as an installer for multiple projects.
 
-The installer's function is to download a zip file from an amazon bucket and unzip it in the specified folder in the configuration settings of the script
-
-Inno setup uses Pascal language and Inno setup library.
+The installer checks hardware specs, downloads a zip file that resides in a bucket in amazon, and unzips the file. 
+After that, creates a Folder in Program Files called Youcanevent, and later in a subfolder with the project name. 
+Finally, it launches the application defined
 
 ## Dependencies
 
 * [Inno Download Plugin (IDP)](https://mitrichsoftware.wordpress.com/inno-setup-tools/inno-download-plugin/)
 * [VCL Styles Inno](https://theroadtodelphi.com/2013/12/11/vcl-styles-for-inno-setup/)
 
-The needed dlls should already be in the same folder where it is needed, but in any case.
-
+The needed dlls and dependencies should be already in the same folder where it is needed.
 
 ## Installation
 
-Downloading the [Inno script Studio](https://www.kymoto.org/products/inno-script-studio/) is the best way to handle the inno script
+
+Just download the project and compile the script.
+
+Download the [Inno script Studio](https://www.kymoto.org/products/inno-script-studio/) to have a better way to handle the inno setup.
+
+## Structure
+
+
 
 ## How to use it
 
