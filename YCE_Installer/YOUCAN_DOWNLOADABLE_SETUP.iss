@@ -7,9 +7,9 @@
 ; DEFINES
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Common Defines for the application
-#define MyAppName "OSET 2020 Installer - Click Here"
+#define MyAppName "OSET_2020_Installer_Click_Here"
 #define MyAppShortCut "OSET2020"
-#define MyAppVersion "1.1.0.0"
+#define MyAppVersion "1.2.0.0"
 #define MyAppPublisher "Youcanevent"
 #define MyAppURL "https://www.youcanevent.com/"
 #define MyAppExeName "OSET2020.exe"
@@ -56,7 +56,7 @@ Compression=lzma
 SolidCompression=yes
 UninstallDisplayIcon={app}\{#MyAppExeName}
 PrivilegesRequired=none
-ExtraDiskSpaceRequired=500048576
+ExtraDiskSpaceRequired=2500048576
 DisableWelcomePage=no
 DisableDirPage=no
 DisableProgramGroupPage=no
@@ -64,6 +64,7 @@ DisableReadyPage=no
 WizardSmallImageFile={#YCEDependencies}\small.bmp
 WizardImageFile={#YCEDependencies}\verticalbanner.bmp
 CloseApplications=force
+//SignTool=MSign
 //ArchitecturesInstallIn64BitMode=x64
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; UninstallDelete
@@ -104,7 +105,7 @@ WelcomeLabel2=We can't wait to see you!%n%nThis wizard installs OSET 2020 Digita
 FinishedHeadingLabel=%nOSET2020 Setup Complete
 FinishedLabel=The OSET2020 installation is complete.%n%nPlease join us in the Virtual World by clicking on the OSET2020 application shortcut installed on your computer.
 ClickFinish=Click Finish to exit Setup and launch OSET2020
-DiskSpaceMBLabel=At least 2000 MB of free disk space is required.
+DiskSpaceMBLabel=At least 3500 MB of free disk space is required.
 SelectStartMenuFolderDesc=Where should Setup place the OSET2020 application's shortcuts?
 WizardSelectDir=Select Destination Location for Custom Install
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -159,7 +160,10 @@ var
   CustomImage: TBitmapImage;
   Page: TInputFileWizardPage;
   NoticeLabel : TLabel;
-
+  ValidRAM : Boolean;
+  ValidVRAM : Boolean;
+  ValidCPU : Boolean;
+  ValidClock : Boolean; 
 // Const values
 const
   SHCONTCH_NOPROGRESSBOX = 4;
@@ -207,12 +211,13 @@ var
   MinRAM, MinDisk, MinClockSpeed, MinVRAM : Extended;
   Name, Substr : string;
   Family: Integer;
+  FinalValue : Integer;
 begin
 
   // Minimum RAM required for the application to run in bytes
   MinRAM := 8000000000.00;
   // Minimum Disk space required for the application to be stored
-  MinDisk := 2000000000.00;
+  MinDisk := 3500000000.00;
   // Minimum clock speed of the processor for the app to run
   MinClockSpeed := 2400.00;
   // Minimum VRAM required for the application to run in bytes
@@ -237,6 +242,7 @@ begin
     // If the users RAM is less than the required RAM
     if RAM < MinRAM then
     begin
+      
       // The user can still continue with the installation even if the ram is 
       // less than the minimum, but this way we warn the user about it
       if SuppressibleMsgBox('Your Computer has less than the minimum Memory ' + 
@@ -248,6 +254,7 @@ begin
                             'Do you wish to continue?', mbError, MB_YESNO, IDYES) = IDNO then
       begin
         Result := False;
+        exit;
       end;
     end;
   end;
@@ -276,6 +283,7 @@ begin
                             ' this installer again', mbCriticalError, MB_OK, MB_OK) = IDOK then
       begin
         Result := False;
+        exit;
       end;
     end;
   end;
@@ -328,6 +336,7 @@ begin
                             'Do you wish to continue?', mbError, MB_YESNO, IDYES) = IDNO then
         begin
           Result := False;
+          exit;
         end;
       end;
     end;
@@ -377,6 +386,7 @@ begin
                               'Do you wish to continue?', mbError, MB_YESNO, IDYES) = IDNO then
         begin
           Result := False;
+          exit;
         end;
       end;
 
@@ -396,6 +406,7 @@ begin
                               'Do you wish to continue?', mbError, MB_YESNO, IDYES) = IDNO then
         begin
           Result := False;
+          exit;
         end;
       end;
     end;
@@ -416,6 +427,7 @@ begin
                             'Do you wish to continue?', mbError, MB_YESNO, IDYES) = IDNO then
       begin
         Result := False;
+        exit;
       end;
     end;
   end;
@@ -470,6 +482,12 @@ var
   strProg: string;
 
 begin
+
+  ValidRAM := True;
+  ValidVRAM := True;
+  ValidCPU := True;
+  ValidClock := True;
+
 	ExtractTemporaryFile('{#VCLStyle}');
 	LoadVCLStyle(ExpandConstant('{tmp}\{#VCLStyle}'));
   Result := True;
@@ -519,7 +537,7 @@ begin
 
   // Extract files
   ExtractTemporaryFile('horizontalbanner.bmp');
-
+  
   // Define Wizard UI variables
   WizardForm.CancelButton.Top := WizardForm.CancelButton.Top + 3;
   WizardForm.NextButton.Left := WizardForm.NextButton.Left - 5;
@@ -622,7 +640,7 @@ begin
   with requiredDiskSpace do
   begin
     Parent := IDPForm.Page.Surface;
-    Caption := 'At least 2000 MB of free disk space is required.';
+    Caption := 'At least 3500 MB of free disk space is required.';
     Left := ScaleX(0);
     Top := ScaleY(200);
     Font.Size := 9; 
