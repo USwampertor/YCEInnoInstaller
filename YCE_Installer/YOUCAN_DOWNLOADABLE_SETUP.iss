@@ -506,7 +506,7 @@ begin
     Until not (winHwnd <> 0);
   except
   end;
-
+  (*
   //If by any chance the hardware doesn't meet the minimum required specs
   if not CollectInformation then
   begin
@@ -514,7 +514,7 @@ begin
     SuppressibleMsgBox('OSET was not able to install on your PC', mbError, MB_OK, MB_OK);
     Result := False;
   end;
-  
+  *)
 end;
 
 // @brief: Default Inno setup de-initialization
